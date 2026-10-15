@@ -1,10 +1,11 @@
-# TileRank API Worker. NOT DEPLOYED. Fits the Cloudflare Workers free plan (100k requests/day).
-name = "tilerank-api"
+# RankFootprint API Worker. NOT DEPLOYED. Fits the Cloudflare Workers free plan (100k requests/day).
+name = "rankfootprint-api"
 main = "src/index.js"
 compatibility_date = "2026-10-01"
 
 [vars]
-PROVIDER = "mock"            # mock | dataforseo | serpapi | google_places
+PROVIDER = "serpapi"         # live provider. mock | dataforseo | serpapi | google_places
+MONTHLY_SEARCH_CAP = "250"   # SerpApi free plan = 250 searches/month; 1 grid point = 1 search
 ALLOWED_ORIGIN = "https://joshuaofisrael.github.io"
 MAX_GRID_POINTS = "81"
 
@@ -12,7 +13,11 @@ MAX_GRID_POINTS = "81"
 #   DATAFORSEO_LOGIN, DATAFORSEO_PASSWORD   (provider = dataforseo)
 #   SERPAPI_KEY                             (provider = serpapi)
 #   GOOGLE_PLACES_KEY                       (provider = google_places)
-# Optional lead storage (free tier): uncomment after `wrangler kv namespace create LEADS`
+# KV (free tier). Create with `npx wrangler kv namespace create USAGE` / `... create LEADS`, paste ids, uncomment.
+# USAGE is REQUIRED for live providers: without it /api/scan refuses live lookups (fails closed).
+# [[kv_namespaces]]
+# binding = "USAGE"
+# id = "<fill-in>"
 # [[kv_namespaces]]
 # binding = "LEADS"
 # id = "<fill-in>"

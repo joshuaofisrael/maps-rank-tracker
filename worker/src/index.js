@@ -8,7 +8,11 @@ export default {
   async fetch(req, env) {
     const { pathname } = new URL(req.url);
     if (req.method === "OPTIONS") return json(env, {});
-    if (pathname === "/api/health") return json(env, { ok: true, provider: env.PROVIDER || "mock" });
+    if (pathname === "/api/health") {
+      const month = new Date().toISOString().slice(0, 7);
+      const used = env.USAGE ? +(await env.USAGE.get(`searches:${month}`)) || 0 : null;
+      return json(env, { ok: true, provider: env.PROVIDER || "mock", month, used, cap: +(env.MONTHLY_SEARCH_CAP || 250) });
+    }
     if (req.method !== "POST") return json(env, { error: "POST only" }, 405);
     let body; try { body = await req.json(); } catch { return json(env, { error: "Invalid JSON" }, 400); }
 
@@ -17,7 +21,18 @@ export default {
       const max = +(env.MAX_GRID_POINTS || 81);
       if (!Array.isArray(points) || !points.length || points.length > max || !query || !target)
         return json(env, { error: `Need points (1-${max}), query, target` }, 400);
-      const adapter = providers[env.PROVIDER] || providers.mock;
+      const name = providers[env.PROVIDER] ? env.PROVIDER : "mock";
+      const adapter = providers[name];
+      if (name !== "mock") {
+        const missing = name === "serpapi" && !env.SERPAPI_KEY ? "SERPAPI_KEY secret" : !env.USAGE ? "USAGE KV binding" : null;
+        if (missing) return json(env, { error: `Live provider not configured (${missing})` }, 503);
+        const cap = +(env.MONTHLY_SEARCH_CAP || 250), month = new Date().toISOString().slice(0, 7), k = `searches:${month}`;
+        const used = +(await env.USAGE.get(k)) || 0;
+        if (used + points.length > cap)
+          return json(env, { error: "Monthly search cap reached", used, cap, requested: points.length }, 429);
+        // Reserve before calling the provider so concurrent scans can't overshoot by much (KV is eventually consistent).
+        await env.USAGE.put(k, String(used + points.length), { expirationTtl: 60 * 60 * 24 * 62 });
+      }
       const results = [];
       for (const p of points) { // sequential: keeps within free-plan subrequest limits and provider rate limits
         try { results.push({ row: p.row, col: p.col, ...(await adapter.rankAt(env, p, query, target)) }); }

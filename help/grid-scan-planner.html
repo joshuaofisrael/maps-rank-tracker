@@ -1,0 +1,27 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Grid scan planner: points, spacing and coverage | RankFootprint</title><meta name="description" content="Free planner: enter your service radius and grid size to see search points, spacing and area covered for a Google Maps grid scan."><meta name="robots" content="index,follow"><link rel="canonical" href="https://joshuaofisrael.github.io/maps-rank-tracker/help/grid-scan-planner.html">
+<link rel="icon" href="../assets/logo.svg"><link rel="stylesheet" href="../assets/style.css"><script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","headline":"Grid scan planner: points, spacing and coverage","author":{"@id":"https://joshuaofisrael.github.io/maps-rank-tracker/#org"},"publisher":{"@type": "Organization", "@id": "https://joshuaofisrael.github.io/maps-rank-tracker/#org", "name": "Joshua Israel Ventures LLC", "url": "https://joshuaofisrael.github.io/maps-rank-tracker/", "logo": "https://joshuaofisrael.github.io/maps-rank-tracker/assets/logo.svg", "brand": {"@type": "Brand", "name": "RankFootprint"}},"datePublished":"2026-10-15"}</script><script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Grid scan planner","applicationCategory":"BusinessApplication","operatingSystem":"Web","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"url":"https://joshuaofisrael.github.io/maps-rank-tracker/help/grid-scan-planner.html"}</script></head><body>
+<header><a class="brand" href="../index.html"><img src="../assets/logo.svg" alt=""> RankFootprint</a><nav><a href="../index.html#how">How it works</a><a href="../pricing.html">Pricing</a><a href="../free-scan.html">Free scan</a><a href="index.html">Help</a><a href="../app/">App</a></nav></header>
+<main><article><h1>Grid scan planner: points, spacing and coverage</h1>
+<p>Enter your service radius and grid size to see how many search points a scan uses and how far apart they are. It's a free tool you can link to.</p>
+<label for="gp-r">Service radius (miles)</label><input id="gp-r" type="number" min="0.25" step="0.25" value="3">
+<label for="gp-n">Grid size</label><select id="gp-n"><option>3</option><option selected>5</option><option>7</option><option>9</option><option>11</option><option>13</option></select>
+<pre id="gp-out" role="status"></pre>
+<script>
+(function(){const r=document.getElementById('gp-r'),n=document.getElementById('gp-n'),o=document.getElementById('gp-out');
+function u(){const R=+r.value,N=+n.value,pts=N*N,sp=N>1?(2*R)/(N-1):0;
+o.textContent=`${N}×${N} grid = ${pts} search points
+Spacing between points: ${sp.toFixed(2)} mi (${(sp*1.609).toFixed(2)} km)
+Area covered: ${(2*R).toFixed(2)} × ${(2*R).toFixed(2)} mi square`;}
+r.oninput=n.onchange=u;u();})();
+</script>
+<h2>Rules of thumb</h2>
+<table><thead><tr><th>Area type</th><th>Typical radius</th><th>Suggested grid</th><th>Spacing</th></tr></thead><tbody>
+<tr><td>Dense city centre</td><td>1 mi</td><td>5×5</td><td>0.5 mi</td></tr>
+<tr><td>Suburb / town</td><td>3 mi</td><td>7×7</td><td>1 mi</td></tr>
+<tr><td>County-wide trade</td><td>10-15 mi</td><td>9×9</td><td>2.5-3.75 mi</td></tr></tbody></table>
+<p>These are our own suggestions, not fixed rules. If points are much more than a mile apart in a busy city, you can miss changes between them. If the grid goes far beyond where you work, it adds "not found" points that don't matter.</p>
+<p>Related: <a href="choosing-grid-size-and-radius.html">choosing grid size and radius</a> · <a href="how-to-read-a-maps-rank-grid.html">reading your results</a> · <a href="../app/">open the scan preview</a></p></article></main>
+<footer><p><strong>About:</strong> RankFootprint shows local businesses where they appear in Google Maps results, block by block across their service area.</p>
+<p><a href="../terms.html">Terms</a> · <a href="../privacy.html">Privacy</a> · <a href="../disclaimer.html">Disclaimer</a> · <a href="../index.html#contact">Contact</a></p>
+<p>© 2026 Joshua Israel Ventures LLC. All rights reserved. RankFootprint is owned and operated by Joshua Israel Ventures LLC, a Florida limited liability company. RankFootprint is not affiliated with or endorsed by Google.</p></footer></body></html>
