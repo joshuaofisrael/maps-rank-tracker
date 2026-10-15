@@ -14,4 +14,4 @@ Allow: /
 User-agent: Applebot-Extended
 Allow: /
 
-Sitemap: https://joshuaofisrael.github.io/maps-rank-tracker/sitemap.xml
+Sitemap: https://rankfootprint.com/sitemap.xml

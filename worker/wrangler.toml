@@ -6,7 +6,7 @@ compatibility_date = "2026-10-01"
 [vars]
 PROVIDER = "serpapi"         # live provider. mock | dataforseo | serpapi | google_places
 MONTHLY_SEARCH_CAP = "250"   # SerpApi free plan = 250 searches/month; 1 grid point = 1 search
-ALLOWED_ORIGIN = "https://joshuaofisrael.github.io"
+ALLOWED_ORIGIN = "https://rankfootprint.com"
 MAX_GRID_POINTS = "81"
 
 # Secrets (never commit). Set with: npx wrangler secret put <NAME>

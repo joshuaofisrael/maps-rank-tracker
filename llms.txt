@@ -2,14 +2,14 @@
 
 > Google Maps grid rank tracking for local businesses, by Joshua Israel Ventures LLC.
 
-- [Home](https://joshuaofisrael.github.io/maps-rank-tracker/)
-- [Pricing](https://joshuaofisrael.github.io/maps-rank-tracker/pricing.html)
-- [Free 3x3 scan](https://joshuaofisrael.github.io/maps-rank-tracker/free-scan.html)
-- Help: https://joshuaofisrael.github.io/maps-rank-tracker/help/
-- [What is grid rank tracking?](https://joshuaofisrael.github.io/maps-rank-tracker/help/what-is-grid-rank-tracking.html)
-- [Choosing grid size and radius](https://joshuaofisrael.github.io/maps-rank-tracker/help/choosing-grid-size-and-radius.html)
-- [How to read a Maps rank grid](https://joshuaofisrael.github.io/maps-rank-tracker/help/how-to-read-a-maps-rank-grid.html)
-- [Why Maps rankings change across town](https://joshuaofisrael.github.io/maps-rank-tracker/help/why-maps-rankings-change-across-town.html)
-- [Grid scan planner (free tool)](https://joshuaofisrael.github.io/maps-rank-tracker/help/grid-scan-planner.html)
+- [Home](https://rankfootprint.com/)
+- [Pricing](https://rankfootprint.com/pricing.html)
+- [Free 3x3 scan](https://rankfootprint.com/free-scan.html)
+- Help: https://rankfootprint.com/help/
+- [What is grid rank tracking?](https://rankfootprint.com/help/what-is-grid-rank-tracking.html)
+- [Choosing grid size and radius](https://rankfootprint.com/help/choosing-grid-size-and-radius.html)
+- [How to read a Maps rank grid](https://rankfootprint.com/help/how-to-read-a-maps-rank-grid.html)
+- [Why Maps rankings change across town](https://rankfootprint.com/help/why-maps-rankings-change-across-town.html)
+- [Grid scan planner (free tool)](https://rankfootprint.com/help/grid-scan-planner.html)
 
 Data: licensed third-party search data providers. Not affiliated with Google.
