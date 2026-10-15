@@ -1,23 +1,34 @@
-# RankFootprint API Worker. NOT DEPLOYED. Fits the Cloudflare Workers free plan (100k requests/day).
+# RankFootprint API Worker. NOT DEPLOYED. Fits Cloudflare's free plan (Workers 100k req/day, D1 5 GB, KV free tier).
 name = "rankfootprint-api"
 main = "src/index.js"
 compatibility_date = "2026-10-01"
+# Serve at api.rankfootprint.com (same site as rankfootprint.com, so the session cookie works with SameSite=Lax).
+# Needs rankfootprint.com added to Cloudflare (free plan) OR use the workers.dev URL and switch cookies to SameSite=None.
+# routes = [{ pattern = "api.rankfootprint.com", custom_domain = true }]
 
 [vars]
-PROVIDER = "serpapi"         # live provider. mock | dataforseo | serpapi | google_places
-MONTHLY_SEARCH_CAP = "250"   # SerpApi free plan = 250 searches/month; 1 grid point = 1 search
-ALLOWED_ORIGIN = "https://rankfootprint.com"
-MAX_GRID_POINTS = "81"
+PROVIDER = "serpapi"              # live provider. mock | serpapi | dataforseo | google_places
+MONTHLY_SEARCH_CAP = "250"        # SerpApi free plan. 1 grid point or 1 place lookup = 1 search
+FREE_RADIUS_KM = "3"
+FREE_SCANS_PER_DAY = "20"         # global daily cap on free scans (10 searches each)
+ALLOWED_ORIGIN = "https://rankfootprint.com,https://www.rankfootprint.com"
+API_BASE = "https://api.rankfootprint.com"
+EMAIL_ENABLED = "false"           # flip to "true" only after Resend domain verification + Joshua's OK
+EMAIL_FROM = "RankFootprint <scans@rankfootprint.com>"
 
-# Secrets (never commit). Set with: npx wrangler secret put <NAME>
-#   DATAFORSEO_LOGIN, DATAFORSEO_PASSWORD   (provider = dataforseo)
-#   SERPAPI_KEY                             (provider = serpapi)
-#   GOOGLE_PLACES_KEY                       (provider = google_places)
-# KV (free tier). Create with `npx wrangler kv namespace create USAGE` / `... create LEADS`, paste ids, uncomment.
-# USAGE is REQUIRED for live providers: without it /api/scan refuses live lookups (fails closed).
+# Secrets (never commit). `npx wrangler secret put NAME`:
+#   SERPAPI_KEY            (required for live scans)
+#   RESEND_API_KEY         (optional, results + magic-link emails)
+#   STRIPE_SECRET_KEY      (restricted key: customers read, billing portal sessions write)
+#   STRIPE_WEBHOOK_SECRET  (endpoint: https://api.rankfootprint.com/api/stripe/webhook)
+
+# Create: npx wrangler d1 create rankfootprint  → paste database_id, then apply schema.sql
+# [[d1_databases]]
+# binding = "DB"
+# database_name = "rankfootprint"
+# database_id = "<fill-in>"
+
+# Create: npx wrangler kv namespace create USAGE → paste id. REQUIRED for live providers (monthly cap counter).
 # [[kv_namespaces]]
 # binding = "USAGE"
-# id = "<fill-in>"
-# [[kv_namespaces]]
-# binding = "LEADS"
 # id = "<fill-in>"

@@ -1,55 +1,138 @@
 import { providers } from "./providers.js";
-const json = (env, body, status = 200) => new Response(JSON.stringify(body), { status, headers: {
-  "Content-Type": "application/json", "Access-Control-Allow-Origin": env.ALLOWED_ORIGIN || "*",
-  "Access-Control-Allow-Methods": "POST, OPTIONS", "Access-Control-Allow-Headers": "Content-Type" } });
-const emailOk = e => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e || "");
+import { buildGrid } from "./grid.js";
+import { json, cors, clean, emailOk, randomId, now } from "./util.js";
+import { reserveSearches, usageStatus } from "./usage.js";
+import { sendEmail, scanResultEmail } from "./email.js";
+import * as auth from "./auth.js";
+import * as billing from "./stripe.js";
+
+const PLAN_LIMITS = { free: 0, starter: 5, growth: 7, agency: 9 }; // max grid size per plan
+const SITE = "https://rankfootprint.com";
+
+function summarize(results) {
+  const found = results.filter(r => r.rank != null);
+  return { total: results.length, found: found.length, top3: found.filter(r => r.rank <= 3).length,
+    avg: found.length ? +(found.reduce((s, r) => s + r.rank, 0) / found.length).toFixed(1) : null };
+}
+async function runGrid(env, adapter, points, query, target) {
+  const out = [];
+  for (const p of points) { // sequential: provider rate limits + Workers free-plan subrequest limit (50)
+    try { out.push({ row: p.row, col: p.col, lat: p.lat, lng: p.lng, ...(await adapter.rankAt(env, p, query, target)) }); }
+    catch { out.push({ row: p.row, col: p.col, lat: p.lat, lng: p.lng, rank: null, error: true }); }
+  }
+  return out;
+}
+async function freeScanAllowed(env, email, ip) {
+  const day = new Date().toISOString().slice(0, 10), max = +(env.FREE_SCANS_PER_DAY || 20);
+  const keys = [[`email:${email}`, 1], [`ip:${ip}`, 2], ["global", max]];
+  for (const [k, lim] of keys) {
+    const r = await env.DB.prepare("SELECT n,day FROM free_scan_limits WHERE k=?1").bind(k).first();
+    if (r && r.day === day && r.n >= lim) return false;
+  }
+  for (const [k] of keys) await env.DB.prepare(`INSERT INTO free_scan_limits (k,n,day) VALUES (?1,1,?2)
+    ON CONFLICT(k) DO UPDATE SET n = CASE WHEN day=?2 THEN n+1 ELSE 1 END, day=?2`).bind(k, day).run();
+  return true;
+}
+async function saveScan(env, s) {
+  await env.DB.prepare(`INSERT INTO scans (id,user_id,email,business,keyword,location,center_lat,center_lng,grid_size,radius_km,provider,demo,results,created_at)
+    VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12,?13,?14)`).bind(s.id, s.user_id || null, s.email || null, s.business, s.keyword,
+    s.location || null, s.center.lat, s.center.lng, s.grid_size, s.radius_km, s.provider, s.demo ? 1 : 0, JSON.stringify(s.results), s.created_at).run();
+}
 
 export default {
   async fetch(req, env) {
-    const { pathname } = new URL(req.url);
-    if (req.method === "OPTIONS") return json(env, {});
-    if (pathname === "/api/health") {
-      const month = new Date().toISOString().slice(0, 7);
-      const used = env.USAGE ? +(await env.USAGE.get(`searches:${month}`)) || 0 : null;
-      return json(env, { ok: true, provider: env.PROVIDER || "mock", month, used, cap: +(env.MONTHLY_SEARCH_CAP || 250) });
-    }
-    if (req.method !== "POST") return json(env, { error: "POST only" }, 405);
-    let body; try { body = await req.json(); } catch { return json(env, { error: "Invalid JSON" }, 400); }
+    const url = new URL(req.url), path = url.pathname;
+    if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: cors(env, req) });
+    const providerName = providers[env.PROVIDER] ? env.PROVIDER : "mock", adapter = providers[providerName];
+    try {
+      if (path === "/api/health") return json(env, req, { ok: true, provider: providerName, ...(await usageStatus(env)) });
 
-    if (pathname === "/api/scan") {
-      const { points, query, target } = body;
-      const max = +(env.MAX_GRID_POINTS || 81);
-      if (!Array.isArray(points) || !points.length || points.length > max || !query || !target)
-        return json(env, { error: `Need points (1-${max}), query, target` }, 400);
-      const name = providers[env.PROVIDER] ? env.PROVIDER : "mock";
-      const adapter = providers[name];
-      if (name !== "mock") {
-        const missing = name === "serpapi" && !env.SERPAPI_KEY ? "SERPAPI_KEY secret" : !env.USAGE ? "USAGE KV binding" : null;
-        if (missing) return json(env, { error: `Live provider not configured (${missing})` }, 503);
-        const cap = +(env.MONTHLY_SEARCH_CAP || 250), month = new Date().toISOString().slice(0, 7), k = `searches:${month}`;
-        const used = +(await env.USAGE.get(k)) || 0;
-        if (used + points.length > cap)
-          return json(env, { error: "Monthly search cap reached", used, cap, requested: points.length }, 429);
-        // Reserve before calling the provider so concurrent scans can't overshoot by much (KV is eventually consistent).
-        await env.USAGE.put(k, String(used + points.length), { expirationTtl: 60 * 60 * 24 * 62 });
+      // Public, shareable result (id is 128-bit random, unguessable).
+      if (req.method === "GET" && path.startsWith("/api/results/")) {
+        const id = path.split("/").pop();
+        if (!/^[a-f0-9]{32}$/.test(id)) return json(env, req, { error: "Not found" }, 404);
+        const r = await env.DB.prepare("SELECT id,business,keyword,location,center_lat,center_lng,grid_size,radius_km,provider,demo,results,created_at FROM scans WHERE id=?1").bind(id).first();
+        if (!r) return json(env, req, { error: "Not found" }, 404);
+        const results = JSON.parse(r.results);
+        return json(env, req, { ...r, demo: !!r.demo, results, summary: summarize(results) }, 200, { "Cache-Control": "public, max-age=300" });
       }
-      const results = [];
-      for (const p of points) { // sequential: keeps within free-plan subrequest limits and provider rate limits
-        try { results.push({ row: p.row, col: p.col, ...(await adapter.rankAt(env, p, query, target)) }); }
-        catch { results.push({ row: p.row, col: p.col, rank: null, error: true }); }
-      }
-      return json(env, { provider: env.PROVIDER || "mock", demo: results.some(r => r.demo), results });
-    }
 
-    if (pathname === "/api/lead") {
-      const { name, email, business, keyword, city, note, website } = body;
-      if (website) return json(env, { ok: true }); // honeypot field
-      if (!emailOk(email) || !business || !keyword) return json(env, { error: "Need email, business, keyword" }, 400);
-      const lead = { name, email, business, keyword, city, note, at: new Date().toISOString() };
-      if (env.LEADS) await env.LEADS.put(`lead:${lead.at}:${email}`, JSON.stringify(lead));
-      // No email is sent from here yet; an email provider (e.g. Resend/Postmark) needs Joshua's approval.
-      return json(env, { ok: true, stored: !!env.LEADS });
+      if (req.method === "GET" && path === "/api/auth/verify") {
+        const cookie = await auth.verify(env, url.searchParams.get("token"));
+        return new Response(null, { status: 302, headers: { Location: `${SITE}/account/${cookie ? "" : "?error=link"}`, ...(cookie ? { "Set-Cookie": cookie } : {}) } });
+      }
+      if (req.method === "GET" && path === "/api/me") {
+        const u = await auth.currentUser(env, req);
+        if (!u) return json(env, req, { signedIn: false });
+        const scans = await env.DB.prepare("SELECT id,business,keyword,grid_size,created_at FROM scans WHERE user_id=?1 OR email=?2 ORDER BY created_at DESC LIMIT 50").bind(u.id, u.email).all();
+        return json(env, req, { signedIn: true, email: u.email, plan: u.plan, maxGrid: PLAN_LIMITS[u.plan] ?? 0, scans: scans.results });
+      }
+
+      if (path === "/api/stripe/webhook" && req.method === "POST") {
+        const payload = await req.text();
+        if (!(await billing.verifyWebhook(env, payload, req.headers.get("Stripe-Signature")))) return new Response("bad signature", { status: 400 });
+        await billing.applyEvent(env, JSON.parse(payload));
+        return new Response("ok");
+      }
+
+      if (req.method !== "POST") return json(env, req, { error: "Not found" }, 404);
+      let body; try { body = await req.json(); } catch { return json(env, req, { error: "Invalid JSON" }, 400); }
+
+      // Free 3x3 scan: locate business (1 search) + 9 grid points = 10 searches against the monthly cap.
+      if (path === "/api/free-scan") {
+        const email = String(body.email || "").toLowerCase().trim(), business = clean(body.business), location = clean(body.location), keyword = clean(body.keyword, 80);
+        if (body.website) return json(env, req, { ok: true }); // honeypot
+        if (!emailOk(email) || !business || !location || !keyword) return json(env, req, { error: "Email, business, city/ZIP and search phrase are required" }, 400);
+        if (!env.DB) return json(env, req, { error: "Scans are not live yet" }, 503);
+        if (providerName === "serpapi" && !env.SERPAPI_KEY) return json(env, req, { error: "Scans are not live yet" }, 503);
+        if (!(await freeScanAllowed(env, email, req.headers.get("CF-Connecting-IP") || "unknown")))
+          return json(env, req, { error: "Free scan limit reached for today. Try again tomorrow." }, 429);
+        const cap = await reserveSearches(env, 10);
+        if (!cap.ok) return json(env, req, { error: cap.status === 429 ? "We've hit this month's free scan capacity. You're on the list; we'll email you when a slot opens." : "Scans are not live yet" }, cap.status);
+        const place = await adapter.locate(env, business, location);
+        if (!place) return json(env, req, { error: "We couldn't find that business on Google Maps. Check the name and city." }, 404);
+        const results = await runGrid(env, adapter, buildGrid(place.lat, place.lng, 3, +(env.FREE_RADIUS_KM || 3)), keyword, place.place_id || place.title || business);
+        const scan = { id: randomId(16), email, business: place.title || business, keyword, location, center: { lat: place.lat, lng: place.lng },
+          grid_size: 3, radius_km: +(env.FREE_RADIUS_KM || 3), provider: providerName, demo: providerName === "mock", results, created_at: now() };
+        await saveScan(env, scan);
+        await env.DB.prepare("INSERT INTO leads (email,business,keyword,location,note,scan_id,created_at) VALUES (?1,?2,?3,?4,?5,?6,?7)")
+          .bind(email, business, keyword, location, clean(body.note, 500), scan.id, scan.created_at).run();
+        const shareUrl = `${SITE}/results/?id=${scan.id}`;
+        scan.summary = summarize(results);
+        const mail = await sendEmail(env, { to: email, ...scanResultEmail(scan, shareUrl) });
+        return json(env, req, { ok: true, id: scan.id, url: shareUrl, demo: scan.demo, emailed: mail.sent, summary: scan.summary });
+      }
+
+      // Paid scans: signed-in users, grid size limited by plan.
+      if (path === "/api/scan") {
+        const u = await auth.currentUser(env, req);
+        if (!u) return json(env, req, { error: "Sign in required" }, 401);
+        const n = +body.grid_size, max = PLAN_LIMITS[u.plan] ?? 0;
+        if (![3, 5, 7, 9].includes(n) || n > max) return json(env, req, { error: max ? `Your plan allows grids up to ${max}×${max}` : "Custom scans need a paid plan. Your free 3×3 scan is on the free scan page." }, 403);
+        const lat = +body.lat, lng = +body.lng, radius = Math.min(Math.max(+body.radius_km || 3, 0.2), 40);
+        const keyword = clean(body.keyword, 80), target = clean(body.target);
+        if (!isFinite(lat) || !isFinite(lng) || !keyword || !target) return json(env, req, { error: "lat, lng, keyword, target required" }, 400);
+        const cap = await reserveSearches(env, n * n);
+        if (!cap.ok) return json(env, req, { error: cap.error, used: cap.used, cap: cap.cap }, cap.status);
+        const results = await runGrid(env, adapter, buildGrid(lat, lng, n, radius), keyword, target);
+        const scan = { id: randomId(16), user_id: u.id, business: target, keyword, center: { lat, lng }, grid_size: n, radius_km: radius,
+          provider: providerName, demo: providerName === "mock", results, created_at: now() };
+        await saveScan(env, scan);
+        return json(env, req, { ok: true, id: scan.id, url: `${SITE}/results/?id=${scan.id}`, summary: summarize(results), results });
+      }
+
+      if (path === "/api/auth/request") { const r = await auth.requestLink(env, body.email); return json(env, req, r.body, r.status); }
+      if (path === "/api/auth/logout") return json(env, req, { ok: true }, 200, { "Set-Cookie": await auth.logout(env, req) });
+      if (path === "/api/billing/portal") {
+        const u = await auth.currentUser(env, req);
+        if (!u) return json(env, req, { error: "Sign in required" }, 401);
+        const r = await billing.portalUrl(env, u);
+        return json(env, req, r, r.url ? 200 : 400);
+      }
+      return json(env, req, { error: "Not found" }, 404);
+    } catch (e) {
+      console.error(e);
+      return json(env, req, { error: "Server error" }, 500);
     }
-    return json(env, { error: "Not found" }, 404);
   }
 };

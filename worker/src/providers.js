@@ -7,7 +7,7 @@ function findRank(items, target) {
   return i < 0 ? null : i + 1;
 }
 export const providers = {
-  mock: { async rankAt(env, p, q, target) {
+  mock: { async locate(env, business, location) { return { lat: 42.5653, lng: -83.3866, title: business, place_id: null, demo: true }; }, async rankAt(env, p, q, target) {
     let h = 0; for (const c of `${p.lat},${p.lng}|${q}|${target}`) h = (h * 31 + c.charCodeAt(0)) >>> 0;
     h %= 100; return { rank: h < 12 ? null : 1 + (h % 20), demo: true };
   } },
@@ -19,7 +19,17 @@ export const providers = {
     const items = (await res.json())?.tasks?.[0]?.result?.[0]?.items || [];
     return { rank: findRank(items.filter(i => i.type === "maps_search"), target), demo: false };
   } },
-  serpapi: { async rankAt(env, p, q, target) {
+  serpapi: {
+    // Find the business's coordinates and place_id (costs 1 search).
+    async locate(env, business, location) {
+      const u = new URL("https://serpapi.com/search.json");
+      Object.entries({ engine: "google_maps", type: "search", q: `${business} ${location}`.trim(), api_key: env.SERPAPI_KEY }).forEach(([k, v]) => u.searchParams.set(k, v));
+      const d = await (await fetch(u)).json();
+      const r = d.place_results || (d.local_results || [])[0];
+      if (!r?.gps_coordinates) return null;
+      return { lat: r.gps_coordinates.latitude, lng: r.gps_coordinates.longitude, title: r.title, place_id: r.place_id || null, demo: false };
+    },
+    async rankAt(env, p, q, target) {
     const u = new URL("https://serpapi.com/search.json");
     Object.entries({ engine: "google_maps", type: "search", q, ll: `@${p.lat},${p.lng},15z`, api_key: env.SERPAPI_KEY }).forEach(([k, v]) => u.searchParams.set(k, v));
     const items = (await (await fetch(u)).json()).local_results || [];
