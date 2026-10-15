@@ -1,2 +1,3 @@
-// API configuration. No key is provisioned. Set PLACES_API_KEY server-side only; never commit a real key.
-export const config = { provider: "google-places-textsearch-new", PLACES_API_KEY: "", endpoint: "https://places.googleapis.com/v1/places:searchText" };
+// Front-end config. No secrets ever live here: real provider keys are Cloudflare Worker secrets (see /worker).
+// provider: "mock" (demo data, default) | "worker" (calls the deployed TileRank Worker /api/scan).
+export const config = { provider: "mock", workerUrl: "" };

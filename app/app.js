@@ -1,25 +1,20 @@
 import { config } from "./config.js";
-// Build an n x n grid of lat/lng points spanning `radiusKm` around a centre.
-export function buildGrid(lat, lng, n, radiusKm) {
-  const pts = [], step = n > 1 ? (2 * radiusKm) / (n - 1) : 0;
-  const dLat = km => km / 111.32, dLng = km => km / (111.32 * Math.cos(lat * Math.PI / 180));
-  for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) {
-    const north = radiusKm - r * step, east = -radiusKm + c * step;
-    pts.push({ row: r, col: c, lat: +(lat + dLat(north)).toFixed(6), lng: +(lng + dLng(east)).toFixed(6) });
-  }
-  return pts;
-}
-// Rank of `placeId` in an official Places API Text Search biased to one point. Runs only with a configured key.
-export async function rankAt(point, query, placeId) {
-  if (!config.PLACES_API_KEY) throw new Error("No API key configured");
-  const res = await fetch(config.endpoint, { method: "POST", headers: { "Content-Type": "application/json",
-    "X-Goog-Api-Key": config.PLACES_API_KEY, "X-Goog-FieldMask": "places.id" },
-    body: JSON.stringify({ textQuery: query, locationBias: { circle: { center: { latitude: point.lat, longitude: point.lng }, radius: 500 } } }) });
-  const ids = ((await res.json()).places || []).map(p => p.id), i = ids.indexOf(placeId);
-  return i < 0 ? null : i + 1;
-}
+import { buildGrid } from "./grid.js";
+import { getAdapter } from "./providers/index.js";
+export { buildGrid };
 const $ = id => document.getElementById(id);
-if (typeof document !== "undefined" && $("go")) $("go").onclick = () => {
-  const g = buildGrid(+$("lat").value, +$("lng").value, +$("n").value, +$("r").value);
-  $("out").textContent = `${g.length} points for "${$("kw").value}"` + (config.PLACES_API_KEY ? "" : " (no API key: lookups disabled)") + "\n" + g.map(p => `[${p.row},${p.col}] ${p.lat}, ${p.lng}`).join("\n");
-};
+function cls(rank) { return rank == null ? "t-miss" : rank <= 3 ? "t-top" : rank <= 10 ? "t-mid" : "t-low"; }
+if (typeof document !== "undefined" && $("go")) {
+  const adapter = getAdapter(config);
+  $("source").textContent = adapter.isDemo ? "DEMO DATA: these ranks are made up to show the layout. They are not real Google Maps results." : `Source: ${adapter.label}`;
+  $("source").className = adapter.isDemo ? "demo-banner" : "";
+  $("go").onclick = async () => {
+    const n = +$("n").value, g = buildGrid(+$("lat").value, +$("lng").value, n, +$("r").value);
+    const results = await adapter.scan(g, $("kw").value, $("biz").value);
+    const grid = $("grid"); grid.innerHTML = ""; grid.style.gridTemplateColumns = `repeat(${n}, 3rem)`;
+    for (const r of results) { const d = document.createElement("div"); d.className = `tile ${cls(r.rank)}`;
+      d.textContent = r.rank ?? "–"; d.title = `Row ${r.row + 1}, col ${r.col + 1}${r.demo ? " (demo)" : ""}`; grid.append(d); }
+    const found = results.filter(r => r.rank != null), avg = found.length ? (found.reduce((s, r) => s + r.rank, 0) / found.length).toFixed(1) : "n/a";
+    $("out").textContent = `${results.length} tiles for "${$("kw").value}" · average rank ${avg} · found in ${found.length}/${results.length}` + (adapter.isDemo ? " · DEMO DATA" : "");
+  };
+}

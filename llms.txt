@@ -5,3 +5,4 @@
 - [Home](https://joshuaofisrael.github.io/maps-rank-tracker/)
 - [Pricing](https://joshuaofisrael.github.io/maps-rank-tracker/pricing.html)
 - [Free 3x3 scan](https://joshuaofisrael.github.io/maps-rank-tracker/free-scan.html)
+- Help: https://joshuaofisrael.github.io/maps-rank-tracker/help/

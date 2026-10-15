@@ -1,0 +1,18 @@
+# TileRank API Worker. NOT DEPLOYED. Fits the Cloudflare Workers free plan (100k requests/day).
+name = "tilerank-api"
+main = "src/index.js"
+compatibility_date = "2026-10-01"
+
+[vars]
+PROVIDER = "mock"            # mock | dataforseo | serpapi | google_places
+ALLOWED_ORIGIN = "https://joshuaofisrael.github.io"
+MAX_GRID_POINTS = "81"
+
+# Secrets (never commit). Set with: npx wrangler secret put <NAME>
+#   DATAFORSEO_LOGIN, DATAFORSEO_PASSWORD   (provider = dataforseo)
+#   SERPAPI_KEY                             (provider = serpapi)
+#   GOOGLE_PLACES_KEY                       (provider = google_places)
+# Optional lead storage (free tier): uncomment after `wrangler kv namespace create LEADS`
+# [[kv_namespaces]]
+# binding = "LEADS"
+# id = "<fill-in>"

@@ -9,3 +9,7 @@ header{display:flex;align-items:center;gap:1rem;flex-wrap:wrap}header img{width:
 .grid3{display:grid;grid-template-columns:repeat(3,64px);gap:6px;margin:1rem 0}.grid3 span{height:64px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700;background:#e3eeea;color:#10212b}
 label{display:block;margin-top:.8rem;font-weight:600}input{width:100%;max-width:420px;padding:.6rem;border:1px solid #6b7f78;border-radius:6px;font-size:1rem}
 footer{border-top:1px solid #d5e2de;font-size:.9rem;color:#33464f}:focus-visible{outline:3px solid #ffb703;outline-offset:2px}
+
+.demo-banner{background:#fff3cd;border:2px solid #e0a800;padding:.6rem .8rem;font-weight:700;border-radius:6px}
+.tilegrid{display:grid;gap:4px;margin:1rem 0}.tile{height:3rem;display:flex;align-items:center;justify-content:center;border-radius:6px;font-weight:700;color:#fff}
+.t-top{background:#1f9d55}.t-mid{background:#d69e2e}.t-low{background:#e3342f}.t-miss{background:#6b7280}
