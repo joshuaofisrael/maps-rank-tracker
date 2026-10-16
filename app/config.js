@@ -4,7 +4,7 @@
 export const config = {
   apiBase: "",
   provider: "mock",
-  paidOpen: false,
+  paidOpen: true,
   paymentLinks: {
     starter: "https://buy.stripe.com/aFa8wQ0jS5858NN2rSb3r16",
     growth: "https://buy.stripe.com/cNi8wQ5Ecbwte878Qgb3r17",
