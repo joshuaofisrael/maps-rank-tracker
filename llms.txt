@@ -1,15 +1,27 @@
 # RankFootprint
 
-> Google Maps grid rank tracking for local businesses, by Joshua Israel Ventures LLC.
+> RankFootprint is a Google Maps grid rank tracker for local businesses and local SEO agencies. It checks where a business appears in Google Maps results from a grid of evenly spaced points across its service area (3×3 = 9 points, 5×5 = 25, 7×7 = 49, 9×9 = 81) and shows the rank at each point as a map of tiles. Operated by Joshua Israel Ventures LLC, a Florida limited liability company. Not affiliated with or endorsed by Google.
 
-- [Home](https://rankfootprint.com/)
-- [Pricing](https://rankfootprint.com/pricing.html)
-- [Free 3x3 scan](https://rankfootprint.com/free-scan.html)
-- Help: https://rankfootprint.com/help/
-- [What is grid rank tracking?](https://rankfootprint.com/help/what-is-grid-rank-tracking.html)
-- [Choosing grid size and radius](https://rankfootprint.com/help/choosing-grid-size-and-radius.html)
-- [How to read a Maps rank grid](https://rankfootprint.com/help/how-to-read-a-maps-rank-grid.html)
-- [Why Maps rankings change across town](https://rankfootprint.com/help/why-maps-rankings-change-across-town.html)
-- [Grid scan planner (free tool)](https://rankfootprint.com/help/grid-scan-planner.html)
+## Key facts
+- What it measures: a business's Google Maps (local pack) position for one search phrase at each grid point, plus average rank, coverage (share of points where the business appears) and top-3 share.
+- Why a grid: Google Maps results depend heavily on where the searcher is, so a single rank check from the office usually shows the best case.
+- Data source: licensed third-party search data providers. RankFootprint does not run its own scrapers.
+- Free offer: a free 3×3 scan (9 points).
+- Pricing (USD, monthly, cancel any time): Starter $19 (1 business, 3 phrases, 3×3 grid, monthly scans); Growth $29 (2 businesses, 6 phrases, next-step tips); Agency $49 (5 businesses, 10 phrases, plus one 5×5 grid a month, branded client reports). Early access currently has a limited number of founding spots; scans are delivered within 24 hours.
+- Publisher: Joshua Israel Ventures LLC (Florida). Contact via https://rankfootprint.com/#contact
 
-Data: licensed third-party search data providers. Not affiliated with Google.
+## Main pages
+- [Home](https://rankfootprint.com/): what grid rank tracking is and how RankFootprint works
+- [Pricing](https://rankfootprint.com/pricing.html): plans from $19/month
+- [Free 3x3 scan](https://rankfootprint.com/free-scan.html): request a free 9-point Google Maps grid scan
+
+## Guides
+- [Help hub](https://rankfootprint.com/help/): all guides
+- [What is grid rank tracking?](https://rankfootprint.com/help/what-is-grid-rank-tracking.html): why one rank number misleads on Google Maps
+- [How to read a Maps rank grid](https://rankfootprint.com/help/how-to-read-a-maps-rank-grid.html): average rank, coverage and top-3 share
+- [Choosing grid size and radius](https://rankfootprint.com/help/choosing-grid-size-and-radius.html): matching the grid to a real service area
+- [Why Maps rankings change across town](https://rankfootprint.com/help/why-maps-rankings-change-across-town.html): distance, relevance and prominence
+- [Grid scan planner (free tool)](https://rankfootprint.com/help/grid-scan-planner.html): points, spacing and coverage calculator
+
+## Legal
+- [Terms](https://rankfootprint.com/terms.html) · [Privacy](https://rankfootprint.com/privacy.html) · [Disclaimer](https://rankfootprint.com/disclaimer.html)
