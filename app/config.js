@@ -1,7 +1,10 @@
 // Front-end config. No secrets here: provider keys are Cloudflare Worker secrets (see /worker).
-// apiBase: deployed Worker URL. Empty = scans not live yet (forms show a clear "not live" message, app uses labelled demo data).
+// scanApi: deployed Worker URL used by the free scan form and shared results pages. Empty = free scan form posts to FormSubmit only.
+//   If the Worker errors (e.g. 503 "warming_up" until SERPAPI_KEY is set, or the free budget is used), the form falls back to FormSubmit.
+// apiBase: Worker URL for accounts (magic-link sign-in). Keep empty until Worker email (Resend) is enabled, or sign-in links never arrive.
 // paidOpen: show Stripe checkout buttons on /pricing.html. Keep false until live data capacity can serve paid plans.
 export const config = {
+  scanApi: "https://rankfootprint-api.joshofisrael.workers.dev",
   apiBase: "",
   provider: "mock",
   paidOpen: true,

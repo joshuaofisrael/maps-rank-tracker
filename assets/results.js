@@ -3,8 +3,8 @@ const $ = id => document.getElementById(id), id = new URLSearchParams(location.s
 const cls = r => r == null ? "t-miss" : r <= 3 ? "t-top" : r <= 10 ? "t-mid" : "t-low";
 $("copy").onclick = async () => { await navigator.clipboard.writeText(location.href); $("copied").textContent = "Link copied"; };
 (async () => {
-  if (!config.apiBase || !/^[a-f0-9]{32}$/.test(id || "")) { $("meta").textContent = "No scan found. Request a free scan on the free scan page."; return; }
-  const r = await fetch(`${config.apiBase}/api/results/${id}`);
+  if (!(config.scanApi || config.apiBase) || !/^[a-f0-9]{32}$/.test(id || "")) { $("meta").textContent = "No scan found. Request a free scan on the free scan page."; return; }
+  const r = await fetch(`${(config.scanApi || config.apiBase)}/api/results/${id}`);
   if (!r.ok) { $("meta").textContent = "This scan link isn't valid or has expired."; return; }
   const s = await r.json();
   $("title").textContent = `${s.business}: “${s.keyword}”`;

@@ -1,34 +1,38 @@
-# RankFootprint API Worker. NOT DEPLOYED. Fits Cloudflare's free plan (Workers 100k req/day, D1 5 GB, KV free tier).
+# RankFootprint API Worker. Cloudflare FREE plan only (Workers 100k req/day, D1 5 GB, KV free tier).
+# Account: Joshofisrael@yahoo.com's Account (box wrangler OAuth). Deploy with ../scripts/deploy-worker.sh.
 name = "rankfootprint-api"
 main = "src/index.js"
 compatibility_date = "2026-10-01"
-# Serve at api.rankfootprint.com (same site as rankfootprint.com, so the session cookie works with SameSite=Lax).
-# Needs rankfootprint.com added to Cloudflare (free plan) OR use the workers.dev URL and switch cookies to SameSite=None.
+workers_dev = true
+# Live at https://rankfootprint-api.joshofisrael.workers.dev
+# Later: api.rankfootprint.com needs rankfootprint.com added to Cloudflare (free plan); session cookies use Domain=rankfootprint.com.
 # routes = [{ pattern = "api.rankfootprint.com", custom_domain = true }]
 
 [vars]
 PROVIDER = "serpapi"              # live provider. mock | serpapi | dataforseo | google_places
 MONTHLY_SEARCH_CAP = "250"        # SerpApi free plan. 1 grid point or 1 place lookup = 1 search
+PAID_RESERVE = "223"              # held back for founding paid plans: 2x Starter 27 + Growth 54 + Agency 115
+FREE_SCANS_PER_MONTH = "2"        # instant free scans (10 searches each: 1 locate + 9 points). 250-223 = 27 -> 2
+FREE_SCANS_PER_DAY = "2"          # global daily cap on instant free scans
+FREE_SCANS_PER_IP_DAY = "1"       # per IP per day (plus 1 per email per day)
 FREE_RADIUS_KM = "3"
-FREE_SCANS_PER_DAY = "20"         # global daily cap on free scans (10 searches each)
 ALLOWED_ORIGIN = "https://rankfootprint.com,https://www.rankfootprint.com"
-API_BASE = "https://api.rankfootprint.com"
+API_BASE = "https://rankfootprint-api.joshofisrael.workers.dev"
 EMAIL_ENABLED = "false"           # flip to "true" only after Resend domain verification + Joshua's OK
 EMAIL_FROM = "RankFootprint <scans@rankfootprint.com>"
 
 # Secrets (never commit). `npx wrangler secret put NAME`:
-#   SERPAPI_KEY            (required for live scans)
+#   SERPAPI_KEY            (required for live scans; until set, /api/free-scan returns 503 code "warming_up")
 #   RESEND_API_KEY         (optional, results + magic-link emails)
 #   STRIPE_SECRET_KEY      (restricted key: customers read, billing portal sessions write)
-#   STRIPE_WEBHOOK_SECRET  (endpoint: https://api.rankfootprint.com/api/stripe/webhook)
+#   STRIPE_WEBHOOK_SECRET  (endpoint: <API_BASE>/api/stripe/webhook)
 
-# Create: npx wrangler d1 create rankfootprint  → paste database_id, then apply schema.sql
-# [[d1_databases]]
-# binding = "DB"
-# database_name = "rankfootprint"
-# database_id = "<fill-in>"
+[[d1_databases]]
+binding = "DB"
+database_name = "rankfootprint"
+database_id = "c124d6bf-c21a-492b-be11-14ea1b899ed0"
 
-# Create: npx wrangler kv namespace create USAGE → paste id. REQUIRED for live providers (monthly cap counter).
-# [[kv_namespaces]]
-# binding = "USAGE"
-# id = "<fill-in>"
+# Monthly search-budget counters (title RANKFOOTPRINT_USAGE)
+[[kv_namespaces]]
+binding = "USAGE"
+id = "c33aad80cbc745cbbbcd5b77d360da49"

@@ -1,15 +1,25 @@
 import { config } from "../app/config.js";
+// Free 3x3 scan: try the live Worker first; on any service-side problem fall back to the FormSubmit email request
+// (the form's normal action), so no request is ever lost. Only input problems are shown to the visitor.
 const f = document.getElementById("scan"), msg = document.getElementById("msg"), $ = id => document.getElementById(id);
-f.addEventListener("submit", async e => {
+const api = config.scanApi || config.apiBase;
+function fallback() { msg.textContent = "Sending your request…"; HTMLFormElement.prototype.submit.call(f); }
+if (f && api) f.addEventListener("submit", async e => {
   e.preventDefault();
-  msg.hidden = false;
-  if (!config.apiBase) { msg.textContent = "Free scans open very soon. Nothing was sent or stored. Please check back shortly."; return; }
-  const btn = f.querySelector("button"); btn.disabled = true; msg.textContent = "Scanning 9 points around your business… this takes about 30 seconds.";
+  if ($("_honey") && $("_honey").value) return;
+  const btn = f.querySelector("button"); btn.disabled = true; msg.hidden = false;
+  msg.textContent = "Scanning 9 points around your business… this takes about 30 seconds.";
   try {
-    const r = await fetch(`${config.apiBase}/api/free-scan`, { method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ business: $("biz").value, location: $("loc").value, keyword: $("kw").value, email: $("em").value, website: $("website").value }) });
-    const d = await r.json();
-    if (!r.ok) { msg.textContent = d.error || "Something went wrong. Please try again."; btn.disabled = false; return; }
-    location.href = `results/?id=${d.id}`;
-  } catch { msg.textContent = "Network error. Please try again."; btn.disabled = false; }
+    const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 60000);
+    const r = await fetch(`${api}/api/free-scan`, { method: "POST", headers: { "Content-Type": "application/json" }, signal: ctl.signal,
+      body: JSON.stringify({ business: $("biz").value, location: $("loc").value, keyword: $("kw").value, email: $("em").value }) });
+    clearTimeout(t);
+    const d = await r.json().catch(() => ({}));
+    if (r.ok && d.id) { // copy the lead to Joshua's inbox via FormSubmit (best effort), then show results
+      const fd = new FormData(f); fd.set("_subject", "RankFootprint free scan (instant, live)"); fd.set("results", `https://rankfootprint.com/results/?id=${d.id}`);
+      try { await fetch(f.action.replace("formsubmit.co/", "formsubmit.co/ajax/"), { method: "POST", body: fd, headers: { Accept: "application/json" }, keepalive: true }); } catch {}
+      location.href = `results/?id=${d.id}`; return; }
+    if (r.status === 400 || r.status === 404) { msg.textContent = d.error || "Please check your details and try again."; btn.disabled = false; return; }
+    fallback(); // 503 warming up, 429 budget/rate limit, 5xx: we'll run it by hand and email within 24 hours
+  } catch { fallback(); }
 });

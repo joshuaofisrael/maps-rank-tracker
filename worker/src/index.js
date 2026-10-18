@@ -24,7 +24,7 @@ async function runGrid(env, adapter, points, query, target) {
 }
 async function freeScanAllowed(env, email, ip) {
   const day = new Date().toISOString().slice(0, 10), max = +(env.FREE_SCANS_PER_DAY || 20);
-  const keys = [[`email:${email}`, 1], [`ip:${ip}`, 2], ["global", max]];
+  const keys = [[`email:${email}`, 1], [`ip:${ip}`, +(env.FREE_SCANS_PER_IP_DAY || 1)], ["global", max]];
   for (const [k, lim] of keys) {
     const r = await env.DB.prepare("SELECT n,day FROM free_scan_limits WHERE k=?1").bind(k).first();
     if (r && r.day === day && r.n >= lim) return false;
@@ -83,12 +83,13 @@ export default {
         const email = String(body.email || "").toLowerCase().trim(), business = clean(body.business), location = clean(body.location), keyword = clean(body.keyword, 80);
         if (body.website) return json(env, req, { ok: true }); // honeypot
         if (!emailOk(email) || !business || !location || !keyword) return json(env, req, { error: "Email, business, city/ZIP and search phrase are required" }, 400);
-        if (!env.DB) return json(env, req, { error: "Scans are not live yet" }, 503);
-        if (providerName === "serpapi" && !env.SERPAPI_KEY) return json(env, req, { error: "Scans are not live yet" }, 503);
+        const warming = { error: "Scan service warming up. Live scans start very soon.", code: "warming_up" };
+        if (!env.DB || !env.USAGE) return json(env, req, warming, 503);
+        if (providerName === "serpapi" && !env.SERPAPI_KEY) return json(env, req, warming, 503);
         if (!(await freeScanAllowed(env, email, req.headers.get("CF-Connecting-IP") || "unknown")))
-          return json(env, req, { error: "Free scan limit reached for today. Try again tomorrow." }, 429);
-        const cap = await reserveSearches(env, 10);
-        if (!cap.ok) return json(env, req, { error: cap.status === 429 ? "We've hit this month's free scan capacity. You're on the list; we'll email you when a slot opens." : "Scans are not live yet" }, cap.status);
+          return json(env, req, { error: "Free scan limit reached for today. Try again tomorrow.", code: "rate_limited" }, 429);
+        const cap = await reserveSearches(env, 10, "free");
+        if (!cap.ok) return json(env, req, cap.status === 429 ? { error: "This month's instant free scans are used up. We'll run yours by hand and email it.", code: "free_budget" } : warming, cap.status);
         const place = await adapter.locate(env, business, location);
         if (!place) return json(env, req, { error: "We couldn't find that business on Google Maps. Check the name and city." }, 404);
         const results = await runGrid(env, adapter, buildGrid(place.lat, place.lng, 3, +(env.FREE_RADIUS_KM || 3)), keyword, place.place_id || place.title || business);
@@ -112,7 +113,7 @@ export default {
         const lat = +body.lat, lng = +body.lng, radius = Math.min(Math.max(+body.radius_km || 3, 0.2), 40);
         const keyword = clean(body.keyword, 80), target = clean(body.target);
         if (!isFinite(lat) || !isFinite(lng) || !keyword || !target) return json(env, req, { error: "lat, lng, keyword, target required" }, 400);
-        const cap = await reserveSearches(env, n * n);
+        const cap = await reserveSearches(env, n * n, "paid");
         if (!cap.ok) return json(env, req, { error: cap.error, used: cap.used, cap: cap.cap }, cap.status);
         const results = await runGrid(env, adapter, buildGrid(lat, lng, n, radius), keyword, target);
         const scan = { id: randomId(16), user_id: u.id, business: target, keyword, center: { lat, lng }, grid_size: n, radius_km: radius,
