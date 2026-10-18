@@ -1,4 +1,6 @@
-# RankFootprint API Worker (not deployed)
+# RankFootprint API Worker
+
+Live (18 Oct 2026): https://rankfootprint-api.joshofisrael.workers.dev on Cloudflare free plan (account joshofisrael@yahoo.com, box wrangler OAuth). D1 `rankfootprint` (c124d6bf-...), KV `RANKFOOTPRINT_USAGE`. Deploy: `scripts/deploy-worker.sh [--schema]` (reads SERPAPI_KEY from /workspace/.secrets/serpapi.env, runs under heavy-build lock). Until SERPAPI_KEY is set, `/api/free-scan` returns 503 `warming_up` and the site falls back to FormSubmit. Budget: see /workspace/maps-rank-tracker-outreach/fulfilment.md.
 Cloudflare Worker + D1 (users, magic-link sessions, scans, leads) + KV (monthly search cap). Free-tier sized.
 
 Endpoints
