@@ -8,7 +8,7 @@
 - Data source: licensed third-party search data providers. RankFootprint does not run its own scrapers.
 - Free offer: a free 3×3 scan (9 points).
 - Pricing (USD, monthly, cancel any time): Starter $19 (1 business, 3 phrases, 3×3 grid, monthly scans); Growth $29 (2 businesses, 6 phrases, next-step tips); Agency $49 (5 businesses, 10 phrases, plus one 5×5 grid a month, branded client reports). Early access currently has a limited number of founding spots; scans are delivered within 24 hours.
-- Publisher: Joshua Israel Ventures LLC (Florida). Contact via https://rankfootprint.com/#contact
+- Publisher: Joshua Israel Ventures LLC (Florida). Contact via https://rankfootprint.com/contact/
 
 ## Main pages
 - [Home](https://rankfootprint.com/): what grid rank tracking is and how RankFootprint works
