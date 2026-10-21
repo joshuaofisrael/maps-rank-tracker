@@ -21,7 +21,7 @@
 - [How to read a Maps rank grid](https://rankfootprint.com/help/how-to-read-a-maps-rank-grid.html): average rank, coverage and top-3 share
 - [Choosing grid size and radius](https://rankfootprint.com/help/choosing-grid-size-and-radius.html): matching the grid to a real service area
 - [Why Maps rankings change across town](https://rankfootprint.com/help/why-maps-rankings-change-across-town.html): distance, relevance and prominence
-- [Grid scan planner (free tool)](https://rankfootprint.com/help/grid-scan-planner.html): points, spacing and coverage calculator
+- [Grid scan planner (free tool)](https://rankfootprint.com/help/grid-scan-planner.html): points, spacing and coverage calculator, plus a printable coverage table (3×3 to 13×13 grids, 0.5 to 15 mile radius) with the method explained
 
 ## Legal
 - [Terms](https://rankfootprint.com/terms.html) · [Privacy](https://rankfootprint.com/privacy.html) · [Disclaimer](https://rankfootprint.com/disclaimer.html)
