@@ -18,3 +18,7 @@ footer{border-top:1px solid #d5e2de;font-size:.9rem;color:#33464f}:focus-visible
 
 .table-wrap{overflow-x:auto}caption{text-align:left;font-size:.9em;padding:.4em 0}
 @media print{header nav,footer,#gp-r,#gp-n,label{display:none}.table-wrap{overflow:visible}}
+
+.photo{margin:1.2rem auto;max-width:1000px;padding:0 1rem}.photo img{display:block;width:100%;height:auto;border-radius:12px;box-shadow:0 6px 24px rgba(16,33,43,.18)}.photo figcaption{font-size:.9rem;color:#4a5d66;margin-top:.5rem}
+.hero{background:linear-gradient(135deg,#0b3d5c,#1f7a5c)}.card{transition:box-shadow .2s,transform .2s}.card:hover{box-shadow:0 6px 18px rgba(16,33,43,.12);transform:translateY(-2px)}
+@media(prefers-reduced-motion:reduce){.card{transition:none}.card:hover{transform:none}}
