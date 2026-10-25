@@ -5,7 +5,7 @@
 ## Key facts
 - What it measures: a business's Google Maps (local pack) position for one search phrase at each grid point, plus average rank, coverage (share of points where the business appears) and top-3 share.
 - Why a grid: Google Maps results depend heavily on where the searcher is, so a single rank check from the office usually shows the best case.
-- Data source: licensed third-party search data providers. RankFootprint does not run its own scrapers.
+- Data source: SerpApi, a third-party API that retrieves Google Maps search results on RankFootprint's behalf. Not affiliated with, endorsed by, or sponsored by Google or SerpApi. Results reflect what Google showed at scan time. No ranking guarantee.
 - Free offer: a free 3×3 scan (9 points).
 - Pricing (USD, monthly, cancel any time): Starter $19 (1 business, 3 phrases, 3×3 grid, monthly scans); Growth $29 (2 businesses, 6 phrases, next-step tips); Agency $49 (5 businesses, 10 phrases, plus one 5×5 grid a month, branded client reports). Early access currently has a limited number of founding spots; scans are delivered within 24 hours.
 - Publisher: RankFootprint. Legal details are on the Terms page. Contact via https://rankfootprint.com/contact/

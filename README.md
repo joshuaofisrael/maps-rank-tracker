@@ -1,7 +1,7 @@
 # RankFootprint (repo: maps-rank-tracker)
 Google Maps grid rank tracker, v1 preview. Static site (no build step) served by GitHub Pages.
 - `/` landing, `/pricing.html` ($19/$29/$49, no live payments), `/free-scan.html` (lead-capture design only, nothing sent or stored)
-- `/app/` grid scan preview. Data comes from licensed third-party search data providers via the Worker (SerpApi live adapter, 250 searches/month cap); the browser never holds a key. Until the Worker is deployed the app shows labelled demo data.
+- `/app/` grid scan preview. Data comes from SerpApi (a third-party API that retrieves Google Maps results) via the Worker (, 250 searches/month cap); the browser never holds a key. Until the Worker is deployed the app shows labelled demo data.
 - Terms, Privacy, Disclaimer under Florida law; robots.txt allows all crawlers incl. AI bots; sitemap.xml; llms.txt.
 
 - `/app/` uses a pluggable data adapter (`app/providers/`). Default is the mock adapter, clearly labelled DEMO DATA.
