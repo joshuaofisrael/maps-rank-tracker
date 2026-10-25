@@ -15,7 +15,7 @@ if (f && api) f.addEventListener("submit", async e => {
       body: JSON.stringify({ business: $("biz").value, location: $("loc").value, keyword: $("kw").value, email: $("em").value }) });
     clearTimeout(t);
     const d = await r.json().catch(() => ({}));
-    if (r.ok && d.id) { // copy the lead to Joshua's inbox via FormSubmit (best effort), then show results
+    if (r.ok && d.id) { // copy the lead to the owner's inbox via FormSubmit (best effort), then show results
       const fd = new FormData(f); fd.set("_subject", "RankFootprint free scan (instant, live)"); fd.set("results", `https://rankfootprint.com/results/?id=${d.id}`);
       try { await fetch(f.action.replace("formsubmit.co/", "formsubmit.co/ajax/"), { method: "POST", body: fd, headers: { Accept: "application/json" }, keepalive: true }); } catch {}
       location.href = `results/?id=${d.id}`; return; }
