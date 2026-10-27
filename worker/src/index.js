@@ -110,13 +110,7 @@ export default {
             : { error: "We couldn't verify an unused $1 payment for this scan.", code: "payment_unverified" }, 402);
           const cap = await reserveSearches(env, 10, "paid");
           if (!cap.ok) return json(env, req, { error: "Scan capacity is full this month. Reply to your receipt and we'll run it by hand or refund you.", code: "capacity" }, 429);
-        } else {
-          if (st.mode === "paid") return json(env, req, { error: "Free sample scans are used up. The sample scan is now $1.", code: "payment_required", checkout: st.checkout }, 402);
-          if (!(await freeScanAllowed(env, email, req.headers.get("CF-Connecting-IP") || "unknown")))
-            return json(env, req, { error: "Free scan limit reached for today. Try again tomorrow.", code: "rate_limited" }, 429);
-          const cap = st.mode === "free" ? await reserveSearches(env, 10, "free") : { ok: false, status: 429 };
-          if (!cap.ok) return json(env, req, cap.status === 429 ? { error: "This month's instant free scans are used up. We'll run yours by hand and email it.", code: "free_budget" } : warming, cap.status);
-        }
+        } else return json(env, req, { error: "The sample scan is $1.", code: "payment_required", checkout: st.checkout }, 402);
         const place = await adapter.locate(env, business, location);
         if (!place) return json(env, req, { error: "We couldn't find that business on Google Maps. Check the name and city." }, 404);
         const results = await runGrid(env, adapter, buildGrid(place.lat, place.lng, 3, +(env.FREE_RADIUS_KM || 3)), keyword, place.place_id || place.title || business);

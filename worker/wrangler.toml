@@ -12,7 +12,7 @@ workers_dev = true
 PROVIDER = "serpapi"              # live provider. mock | serpapi | dataforseo | google_places
 MONTHLY_SEARCH_CAP = "250"        # SerpApi free plan. 1 grid point or 1 place lookup = 1 search
 PAID_RESERVE = "223"              # held back for founding paid plans: 2x Starter 27 + Growth 54 + Agency 115
-FREE_SCANS_PER_MONTH = "2"        # instant free scans (10 searches each: 1 locate + 9 points). 250-223 = 27 -> 2
+FREE_SCANS_PER_MONTH = "0"       # no free sample scans (every sample scan is $1, 27 Oct 2026)
 FREE_SCANS_PER_DAY = "2"          # global daily cap on instant free scans
 FREE_SCANS_PER_IP_DAY = "1"       # per IP per day (plus 1 per email per day)
 FREE_RADIUS_KM = "3"

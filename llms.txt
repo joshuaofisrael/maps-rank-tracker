@@ -6,7 +6,7 @@
 - What it measures: a business's Google Maps (local pack) position for one search phrase at each grid point, plus average rank, coverage (share of points where the business appears) and top-3 share.
 - Why a grid: Google Maps results depend heavily on where the searcher is, so a single rank check from the office usually shows the best case.
 - Data source: SerpApi, a third-party API that retrieves Google Maps search results on RankFootprint's behalf. Not affiliated with, endorsed by, or sponsored by Google or SerpApi. Results reflect what Google showed at scan time. No ranking guarantee.
-- Sample scan: a 3×3 sample scan (9 points), free while this month's capacity lasts, otherwise $1 (live status: https://rankfootprint-api.joshofisrael.workers.dev/api/sample-status).
+- Sample scan: a 3×3 sample scan (9 points), $1 (live status: https://rankfootprint-api.joshofisrael.workers.dev/api/sample-status).
 - Pricing (USD, monthly, cancel any time): Starter $19 (1 business, 3 phrases, 3×3 grid, monthly scans); Growth $29 (2 businesses, 6 phrases, next-step tips); Agency $49 (5 businesses, 10 phrases, plus one 5×5 grid a month, branded client reports). Early access currently has a limited number of founding spots; scans are delivered within 24 hours.
 - Publisher: RankFootprint. Legal details are on the Terms page. Contact via https://rankfootprint.com/contact/
 - About and methodology: https://rankfootprint.com/about/ (what a grid scan is, data source SerpApi, limits of the results)
@@ -14,7 +14,7 @@
 ## Main pages
 - [Home](https://rankfootprint.com/): what grid rank tracking is and how RankFootprint works
 - [Pricing](https://rankfootprint.com/pricing.html): plans from $19/month
-- [3x3 sample scan](https://rankfootprint.com/free-scan.html): a 9-point Google Maps grid scan (free while monthly capacity lasts, otherwise $1)
+- [3x3 sample scan](https://rankfootprint.com/free-scan.html): a 9-point Google Maps grid scan for $1, paid through Stripe
 
 ## Guides
 - [Help hub](https://rankfootprint.com/help/): all guides
