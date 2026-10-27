@@ -51,7 +51,7 @@ export async function sampleState(env) {
   const floor = Math.ceil(cap * (+(env.SAMPLE_FLOOR_PCT || 15)) / 100);
   const left = env.USAGE && !mock ? await serpLeft(env) : null;
   const freeOk = mock || (freeRun < freeMax && used + 10 <= cap - reserve && (left == null || left - 10 >= floor));
-  const payReady = env.PAID_SAMPLE_ENABLED === "true" && !!env.STRIPE_SECRET_KEY && !!env.SAMPLE_PAYMENT_URL;
+  const payReady = env.PAID_SAMPLE_ENABLED === "true" && !!env.STRIPE_WEBHOOK_SECRET && !!env.SAMPLE_PAYMENT_URL;
   const mode = freeOk ? "free" : payReady ? "paid" : "manual";
   return { mode, price_usd: mode === "paid" ? 1 : 0, checkout: mode === "paid" ? env.SAMPLE_PAYMENT_URL : null,
     free_scans_left: Math.max(0, freeMax - freeRun), serpapi_left: left, floor, paid_switch: payReady };

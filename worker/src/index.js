@@ -88,10 +88,13 @@ export default {
         if (!env.DB || !env.USAGE) return json(env, req, warming, 503);
         if (providerName === "serpapi" && !env.SERPAPI_KEY) return json(env, req, warming, 503);
         const st = await sampleState(env);
+        if (body.session_id && !body.paid_session) body.paid_session = body.session_id;
         if (body.paid_session) { // $1 sample scan: only after a verified, unused Stripe payment
           if (!st.paid_switch) return json(env, req, { error: "Paid sample scans are not switched on yet.", code: "paid_off" }, 403);
           const claim = await billing.claimSampleSession(env, String(body.paid_session));
-          if (!claim.ok) return json(env, req, { error: "We couldn't verify an unused $1 payment for this scan.", code: "payment_unverified" }, 402);
+          if (!claim.ok) return json(env, req, claim.pending
+            ? { error: "We haven't received confirmation of this $1 payment yet.", code: "payment_pending" }
+            : { error: "We couldn't verify an unused $1 payment for this scan.", code: "payment_unverified" }, 402);
           const cap = await reserveSearches(env, 10, "paid");
           if (!cap.ok) return json(env, req, { error: "Scan capacity is full this month. Reply to your receipt and we'll run it by hand or refund you.", code: "capacity" }, 429);
         } else {

@@ -10,4 +10,5 @@ CREATE TABLE IF NOT EXISTS leads (id INTEGER PRIMARY KEY AUTOINCREMENT, email TE
   location TEXT, note TEXT, scan_id TEXT, created_at TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS free_scan_limits (k TEXT PRIMARY KEY, n INTEGER NOT NULL, day TEXT NOT NULL);
 CREATE INDEX IF NOT EXISTS scans_user ON scans(user_id);
-CREATE TABLE IF NOT EXISTS paid_samples (session_id TEXT PRIMARY KEY, email TEXT, created_at TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS paid_samples (session_id TEXT PRIMARY KEY, email TEXT, created_at TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'available', used_at TEXT);
+-- existing DBs (27 Oct 2026): ALTER TABLE paid_samples ADD COLUMN status TEXT NOT NULL DEFAULT 'available'; ALTER TABLE paid_samples ADD COLUMN used_at TEXT;

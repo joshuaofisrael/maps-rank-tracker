@@ -36,7 +36,13 @@ export async function verifyWebhook(env, payload, header) {
 export async function applyEvent(env, evt) {
   const o = evt.data?.object || {};
   if (evt.type === "checkout.session.completed") {
-    if (o.payment_link === env.SAMPLE_PAYMENT_LINK_ID || o.metadata?.kind === "sample_scan") return; // $1 sample, not a plan
+    if (o.payment_link === env.SAMPLE_PAYMENT_LINK_ID || o.metadata?.kind === "sample_scan") { // $1 sample, not a plan
+      if (o.payment_link === env.SAMPLE_PAYMENT_LINK_ID && o.amount_total === 100 && (o.currency || "").toLowerCase() === "usd"
+        && o.payment_status === "paid" && /^cs_(live|test)_[A-Za-z0-9]+$/.test(o.id || ""))
+        await env.DB.prepare("INSERT OR IGNORE INTO paid_samples (session_id,email,created_at,status) VALUES (?1,?2,?3,'available')")
+          .bind(o.id, o.customer_details?.email || null, new Date().toISOString()).run();
+      return;
+    }
     const email = o.customer_details?.email; if (!email) return;
     const plan = PLAN_BY_LINK[o.payment_link] || "starter";
     await env.DB.prepare(`INSERT INTO users (id,email,plan,stripe_customer,created_at) VALUES (?1,?2,?3,?4,?5)
@@ -49,13 +55,13 @@ export async function applyEvent(env, evt) {
   }
 }
 
-// $1 sample scan: verify a Checkout Session server-side (needs STRIPE_SECRET_KEY with checkout_sessions read).
-// Paid, from the sample payment link, and single-use (claimed in D1).
+// $1 sample scan: the signed checkout.session.completed webhook records the paid session as "available" in D1.
+// Claim = atomically flip available -> used. Returns { ok } or { ok:false, pending:true } if not recorded (yet).
 export async function claimSampleSession(env, sessionId) {
-  if (!env.STRIPE_SECRET_KEY || !/^cs_(live|test)_[A-Za-z0-9]+$/.test(sessionId || "")) return { ok: false };
-  const s = await stripe(env, `checkout/sessions/${sessionId}`, null, "GET");
-  if (s.payment_status !== "paid" || s.payment_link !== env.SAMPLE_PAYMENT_LINK_ID || s.amount_total !== 100) return { ok: false };
-  const r = await env.DB.prepare("INSERT OR IGNORE INTO paid_samples (session_id,email,created_at) VALUES (?1,?2,?3)")
-    .bind(sessionId, s.customer_details?.email || null, new Date().toISOString()).run();
-  return { ok: r.meta?.changes === 1, email: s.customer_details?.email };
+  if (!/^cs_(live|test)_[A-Za-z0-9]{8,200}$/.test(sessionId || "")) return { ok: false };
+  const r = await env.DB.prepare("UPDATE paid_samples SET status='used', used_at=?2 WHERE session_id=?1 AND status='available'")
+    .bind(sessionId, new Date().toISOString()).run();
+  if (r.meta?.changes === 1) return { ok: true };
+  const row = await env.DB.prepare("SELECT status FROM paid_samples WHERE session_id=?1").bind(sessionId).first();
+  return { ok: false, pending: !row, used: row?.status === "used" };
 }
