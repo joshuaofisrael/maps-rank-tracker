@@ -36,6 +36,7 @@ export async function verifyWebhook(env, payload, header) {
 export async function applyEvent(env, evt) {
   const o = evt.data?.object || {};
   if (evt.type === "checkout.session.completed") {
+    if (o.payment_link === env.SAMPLE_PAYMENT_LINK_ID || o.metadata?.kind === "sample_scan") return; // $1 sample, not a plan
     const email = o.customer_details?.email; if (!email) return;
     const plan = PLAN_BY_LINK[o.payment_link] || "starter";
     await env.DB.prepare(`INSERT INTO users (id,email,plan,stripe_customer,created_at) VALUES (?1,?2,?3,?4,?5)
@@ -46,4 +47,15 @@ export async function applyEvent(env, evt) {
     const plan = evt.type.endsWith("deleted") || o.status === "canceled" ? "free" : PLAN_BY_PRICE[price] || "starter";
     await env.DB.prepare("UPDATE users SET plan=?1 WHERE stripe_customer=?2").bind(plan, o.customer).run();
   }
+}
+
+// $1 sample scan: verify a Checkout Session server-side (needs STRIPE_SECRET_KEY with checkout_sessions read).
+// Paid, from the sample payment link, and single-use (claimed in D1).
+export async function claimSampleSession(env, sessionId) {
+  if (!env.STRIPE_SECRET_KEY || !/^cs_(live|test)_[A-Za-z0-9]+$/.test(sessionId || "")) return { ok: false };
+  const s = await stripe(env, `checkout/sessions/${sessionId}`, null, "GET");
+  if (s.payment_status !== "paid" || s.payment_link !== env.SAMPLE_PAYMENT_LINK_ID || s.amount_total !== 100) return { ok: false };
+  const r = await env.DB.prepare("INSERT OR IGNORE INTO paid_samples (session_id,email,created_at) VALUES (?1,?2,?3)")
+    .bind(sessionId, s.customer_details?.email || null, new Date().toISOString()).run();
+  return { ok: r.meta?.changes === 1, email: s.customer_details?.email };
 }

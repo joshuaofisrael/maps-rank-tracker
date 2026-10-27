@@ -18,6 +18,10 @@ FREE_SCANS_PER_IP_DAY = "1"       # per IP per day (plus 1 per email per day)
 FREE_RADIUS_KM = "3"
 ALLOWED_ORIGIN = "https://rankfootprint.com,https://www.rankfootprint.com"
 API_BASE = "https://rankfootprint-api.joshofisrael.workers.dev"
+SAMPLE_FLOOR_PCT = "15"           # free sample scans stop when live SerpApi credits would fall below 15% of quota
+PAID_SAMPLE_ENABLED = "false"     # $1 sample switch. OFF until STRIPE_SECRET_KEY secret is set (checkout session read)
+SAMPLE_PAYMENT_URL = "https://buy.stripe.com/8x28wQc2Abwt4xx2rSb3r1T"
+SAMPLE_PAYMENT_LINK_ID = "plink_1UV8eBK3OWN3aipgCM34q1X0"   # price_1UV8e4K3OWN3aipgNCLBv512, $1 one-time
 EMAIL_ENABLED = "false"           # flip to "true" only after Resend domain verification + Joshua's OK
 EMAIL_FROM = "RankFootprint <scans@rankfootprint.com>"
 

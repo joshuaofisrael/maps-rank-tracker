@@ -1,7 +1,7 @@
 import { providers } from "./providers.js";
 import { buildGrid } from "./grid.js";
 import { json, cors, clean, emailOk, randomId, now } from "./util.js";
-import { reserveSearches, usageStatus } from "./usage.js";
+import { reserveSearches, usageStatus, sampleState } from "./usage.js";
 import { sendEmail, scanResultEmail } from "./email.js";
 import * as auth from "./auth.js";
 import * as billing from "./stripe.js";
@@ -45,6 +45,7 @@ export default {
     if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: cors(env, req) });
     const providerName = providers[env.PROVIDER] ? env.PROVIDER : "mock", adapter = providers[providerName];
     try {
+      if (path === "/api/sample-status") { const st = await sampleState(env); delete st.serpapi_left; return json(env, req, st, 200, { "Cache-Control": "public, max-age=120" }); }
       if (path === "/api/health") return json(env, req, { ok: true, provider: providerName, ...(await usageStatus(env)) });
 
       // Public, shareable result (id is 128-bit random, unguessable).
@@ -86,10 +87,20 @@ export default {
         const warming = { error: "Scan service warming up. Live scans start very soon.", code: "warming_up" };
         if (!env.DB || !env.USAGE) return json(env, req, warming, 503);
         if (providerName === "serpapi" && !env.SERPAPI_KEY) return json(env, req, warming, 503);
-        if (!(await freeScanAllowed(env, email, req.headers.get("CF-Connecting-IP") || "unknown")))
-          return json(env, req, { error: "Free scan limit reached for today. Try again tomorrow.", code: "rate_limited" }, 429);
-        const cap = await reserveSearches(env, 10, "free");
-        if (!cap.ok) return json(env, req, cap.status === 429 ? { error: "This month's instant free scans are used up. We'll run yours by hand and email it.", code: "free_budget" } : warming, cap.status);
+        const st = await sampleState(env);
+        if (body.paid_session) { // $1 sample scan: only after a verified, unused Stripe payment
+          if (!st.paid_switch) return json(env, req, { error: "Paid sample scans are not switched on yet.", code: "paid_off" }, 403);
+          const claim = await billing.claimSampleSession(env, String(body.paid_session));
+          if (!claim.ok) return json(env, req, { error: "We couldn't verify an unused $1 payment for this scan.", code: "payment_unverified" }, 402);
+          const cap = await reserveSearches(env, 10, "paid");
+          if (!cap.ok) return json(env, req, { error: "Scan capacity is full this month. Reply to your receipt and we'll run it by hand or refund you.", code: "capacity" }, 429);
+        } else {
+          if (st.mode === "paid") return json(env, req, { error: "Free sample scans are used up. The sample scan is now $1.", code: "payment_required", checkout: st.checkout }, 402);
+          if (!(await freeScanAllowed(env, email, req.headers.get("CF-Connecting-IP") || "unknown")))
+            return json(env, req, { error: "Free scan limit reached for today. Try again tomorrow.", code: "rate_limited" }, 429);
+          const cap = st.mode === "free" ? await reserveSearches(env, 10, "free") : { ok: false, status: 429 };
+          if (!cap.ok) return json(env, req, cap.status === 429 ? { error: "This month's instant free scans are used up. We'll run yours by hand and email it.", code: "free_budget" } : warming, cap.status);
+        }
         const place = await adapter.locate(env, business, location);
         if (!place) return json(env, req, { error: "We couldn't find that business on Google Maps. Check the name and city." }, 404);
         const results = await runGrid(env, adapter, buildGrid(place.lat, place.lng, 3, +(env.FREE_RADIUS_KM || 3)), keyword, place.place_id || place.title || business);
