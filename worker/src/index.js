@@ -39,9 +39,22 @@ async function saveScan(env, s) {
     s.location || null, s.center.lat, s.center.lng, s.grid_size, s.radius_km, s.provider, s.demo ? 1 : 0, JSON.stringify(s.results), s.created_at).run();
 }
 
+const SAMPLE_STATUS_ORIGINS = ["https://rankfootprint.com", "https://mapthegeneral.com", "https://mapthemidterms.com"];
+
 export default {
   async fetch(req, env) {
     const url = new URL(req.url), path = url.pathname;
+    if (path === "/api/sample-status") {
+      const o = req.headers.get("Origin") || "";
+      const sc = { "Access-Control-Allow-Origin": SAMPLE_STATUS_ORIGINS.includes(o) ? o : "https://rankfootprint.com",
+        "Access-Control-Allow-Methods": "GET, OPTIONS", "Access-Control-Allow-Headers": "Content-Type", "Access-Control-Max-Age": "86400", "Vary": "Origin" };
+      if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: sc });
+      if (req.method === "GET" || req.method === "HEAD") {
+        try { const st = await sampleState(env); delete st.serpapi_left;
+          return new Response(JSON.stringify(st), { status: 200, headers: { "Content-Type": "application/json", "Cache-Control": "public, max-age=120", ...sc } });
+        } catch (e) { return new Response(JSON.stringify({ error: "Server error" }), { status: 500, headers: { "Content-Type": "application/json", ...sc } }); }
+      }
+    }
     if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: cors(env, req) });
     const providerName = providers[env.PROVIDER] ? env.PROVIDER : "mock", adapter = providers[providerName];
     try {
