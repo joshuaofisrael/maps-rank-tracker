@@ -38,3 +38,5 @@
 - [Why does my Google Maps ranking look different when I search for myself?](https://rankfootprint.com/help/why-is-my-google-maps-ranking-different-when-i-search.html)
 - [How often should you check Google Maps rankings?](https://rankfootprint.com/help/how-often-to-check-google-maps-rankings.html)
 - [Do Google reviews affect Maps ranking?](https://rankfootprint.com/help/do-google-reviews-affect-maps-ranking.html)
+- [Image policy](https://rankfootprint.com/image-policy/): How images are used on RankFootprint.
+- [Editorial policy](https://rankfootprint.com/editorial/): How the RankFootprint team writes and updates pages.
